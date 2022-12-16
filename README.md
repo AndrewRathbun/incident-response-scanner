@@ -1,5 +1,5 @@
 # incident-response-scanner
- A malware scanner that is configurable for incident responses.
+An easy to configure malware scanner for incident responses. 
 
 # Features
 * Registry Scan
