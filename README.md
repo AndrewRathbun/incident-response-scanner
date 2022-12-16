@@ -19,7 +19,7 @@ Pre-Release
 /* Edit the variables below to match your malware symptoms */
 
 /* process names to search for */
-string[] processes = { "svhost" };
+string[] processes = { "svchost", "rsAudio};
 
 /* Searches ALL users AppData folders for a specific file and verfies the hash if wanted
 * e.g: If the malicous file was located in C:\Users\DrewQ\AppData\Roaming\backdoor.ps1 
