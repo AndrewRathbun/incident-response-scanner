@@ -1,7 +1,8 @@
-﻿using System.Text;
+using System.Text;
 using System.Security.Cryptography;
 using System.Net.NetworkInformation;
 using System.Net;
+using System.Diagnostics;
 
 namespace MalwareScanner
 {
@@ -19,12 +20,13 @@ namespace MalwareScanner
         TextBox displayProcesses;
         TextBox displayFiles;
         TextBox displayIPAddress;
+
         int foundMalware = 0;
 
         /* Edit the variables below to match your malware symptoms */
 
-        /* proceses names to search for */
-        string[] proceses = { "" };
+        /* process names to search for */
+        string[] processes = { "svchost" };
 
         /* Searches ALL users AppData folders for a specific file and verfies the hash if wanted
         * e.g: If the malicous file was located in C:\Users\DrewQ\AppData\Roaming\backdoor.ps1 
@@ -53,6 +55,22 @@ namespace MalwareScanner
             /* Get's All Users folders on a system */
             return Directory.GetDirectories("C:\\Users\\", "*", SearchOption.TopDirectoryOnly);
         }
+
+        List<string> GetProcessNames() {
+            /*  Lists running process names
+             * :return: A list of process names
+             */
+            List<string> results = new List<string>();
+            Process[] runningProcesses = Process.GetProcesses();
+            foreach (Process process in runningProcesses)
+            {
+                string processName = process.ProcessName;
+                if (!results.Contains(processName))
+                    results.Add(processName);
+            }
+            return results;
+        }
+
 
         object? GetSha1FileHash(string filename)
         /* Gets a SHA1 hash of a file
@@ -101,9 +119,7 @@ namespace MalwareScanner
              *  :param displayBox: Text Box to write to
              */
             if (IsFileMalicous(path, hash))
-            {
                 WriteSymptomToTextbox(path, displayBox);
-            }
         }
 
         bool IsFileMalicous(string path, object? hash) {
@@ -142,10 +158,8 @@ namespace MalwareScanner
             IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
             TcpConnectionInformation[] connections = properties.GetActiveTcpConnections();
             foreach (TcpConnectionInformation connection in connections)
-            {
                 // Doesn't support IPV6
                 results.Add(connection.RemoteEndPoint.ToString().Split(":")[0]);
-            }
             return results;
         } 
 
@@ -171,17 +185,44 @@ namespace MalwareScanner
              */
             foreach (string ip in GetActiveTCPConnections())
             {
-                if (IPAddresses.Contains(ip)) {
+                if (IPAddresses.Contains(ip))
                     WriteSymptomToTextbox(ip, displayIPAddress);
-                }
             }
         }
 
 
+        void ProcessRunningProcesses() {
+            /* Checks the running processes to known malicous process names
+             * Edit the variable 'processes' to your symptoms
+             */
+            foreach (string processName in GetProcessNames())
+                {
+                    if (processes.Contains(processName))
+                        WriteSymptomToTextbox(processName, displayProcesses);
+                }
+        }
+
+        void clearDisplay() {
+            /* Clears Scan results
+             */
+            displayProcesses.Text = "";
+            displayIPAddress.Text = "";
+            displayRegistries.Text = "";
+            displayFiles.Text = "";
+        }
+
         public void scan() {
+            /* Scans the computer for malicious symtomns
+             * 1.ProcessTCPConnections
+             * 2.ProcessSystemFiles
+             * 3.ProcessAppDataFiles
+             * 4.ProcessRunningProcesses
+             */
+            clearDisplay();
             ProcessTCPConnections();
             ProcessSystemFiles();
             ProcessAppDataFiles();
+            ProcessRunningProcesses();
         }
     }
 }
