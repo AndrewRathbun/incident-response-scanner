@@ -1,5 +1,7 @@
 # incident-response-scanner
 An easy to configure malware scanner for incident responses. 
+<br>
+![preview](preview.PNG)
 
 ## Status
 Pre-Release
