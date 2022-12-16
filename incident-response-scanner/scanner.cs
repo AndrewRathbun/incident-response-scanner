@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.Diagnostics;
+using Microsoft.Win32;
+using System.Reflection;
 
 namespace MalwareScanner
 {
@@ -51,6 +53,17 @@ namespace MalwareScanner
             {"C:\\Windows\\Boot\\Mal.exe", "b32dab7b26cdf6b9548baea6f3cfe5b8f326ceda"}
         };
 
+
+        /* Windows Registries to check
+         * Note: Use the full path. PATH/VALUE
+         * the format is {REGISTRY, VALUE}. If you are not concerned about the value and only 
+         * want to check for existence pass null.
+         */
+        Dictionary<string, object?> registries = new Dictionary<string, object?>() {
+            {"HKEY_LOCAL_MACHINE\\SYSTEM\\Software\\Microsoft\\shell", "ls -las"},
+            {"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Test", null }
+        };
+        
         string[] GetUsersFolders() {
             /* Get's All Users folders on a system */
             return Directory.GetDirectories("C:\\Users\\", "*", SearchOption.TopDirectoryOnly);
@@ -211,6 +224,31 @@ namespace MalwareScanner
             displayFiles.Text = "";
         }
 
+        void FindMalicousRegistryEntries()
+        /* Looks for malicous registry entries defined in 
+         * the variable 'registries'
+         */
+        {
+            foreach (KeyValuePair<string, object?> kvp in registries)
+            {
+                string registry = kvp.Key;
+                object? value = kvp.Value;
+                string valueName = registry.Split("\\").Last();
+                string keyName = registry.Replace(valueName, "");
+                object? fetchedValue = Registry.GetValue(keyName, valueName, null);
+                if (fetchedValue != null)
+                {
+                    if (value == null)
+                    {
+                        WriteSymptomToTextbox(registry, displayRegistries);
+                        continue;
+                    } else if (value.ToString() == fetchedValue.ToString())
+                        WriteSymptomToTextbox(registry, displayRegistries);
+                }
+            }
+
+        }
+
         public void scan() {
             /* Scans the computer for malicious symtomns
              * 1.ProcessTCPConnections
@@ -223,6 +261,7 @@ namespace MalwareScanner
             ProcessSystemFiles();
             ProcessAppDataFiles();
             ProcessRunningProcesses();
+            FindMalicousRegistryEntries();
         }
     }
 }
